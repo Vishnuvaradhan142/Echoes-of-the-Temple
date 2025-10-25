@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hidden Temple - Adventure Game</title>
+    <!-- Ancient style fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Merriweather:wght@300;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f1724, #0a1020 60%, #071126);
+            color: #efe6d8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Ancient parchment container */
+        .game-container {
+            width: 100%;
+            max-width: 980px;
+            background-color: #efe6d0;
+            border-radius: 18px;
+            border: 8px solid rgba(106,68,38,0.95);
+            box-shadow: 0 18px 60px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.06);
+            overflow: hidden;
+            position: relative;
+            /* simulated parchment texture */
+            background-image:
+                radial-gradient(circle at 10% 10%, rgba(255,240,210,0.06) 0 6%, transparent 8%),
+                radial-gradient(circle at 90% 20%, rgba(220,200,150,0.04) 0 6%, transparent 8%),
+                repeating-linear-gradient(45deg, rgba(0,0,0,0.01) 0 1px, transparent 1px 6px);
+            background-blend-mode: multiply, overlay, normal;
+        }
+
+        /* subtle stained parchment overlay */
+        .game-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                radial-gradient(ellipse at 20% 80%, rgba(120,80,30,0.06) 0 12%, transparent 30%),
+                radial-gradient(ellipse at 80% 30%, rgba(140,100,40,0.04) 0 8%, transparent 25%);
+            mix-blend-mode: multiply;
+            opacity: 0.95;
+        }
+
+        .screen {
+            padding: 40px;
+            text-align: center;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            color: #4b2f14;
+            font-size: 3em;
+            margin-bottom: 18px;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 0 rgba(255,255,255,0.03), 0 6px 14px rgba(0,0,0,0.45);
+        }
+
+        h2 {
+            color: #6b4a2a;
+            margin: 18px 0 10px;
+            padding-bottom: 8px;
+            font-family: 'Merriweather', serif;
+        }
+
+        p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            max-width: 800px;
+        }
+
+        .btn {
+            background: linear-gradient(180deg, #b57b3f, #7a4f28);
+            color: #fff8e6;
+            border: 1px solid rgba(0,0,0,0.35);
+            padding: 12px 26px;
+            margin: 8px;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+            font-family: 'Merriweather', serif;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .btn-large {
+            padding: 20px 40px;
+            font-size: 1.4em;
+            margin: 20px;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #d4af37;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        /* Game Header */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            border-bottom: 3px solid #d4af37;
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat {
+            background: rgba(212, 175, 55, 0.2);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid #d4af37;
+        }
+
+        /* Game Area */
+        .game-area {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 50px);
+            grid-template-rows: repeat(10, 50px);
+            gap: 2px;
+            background: #5D4037;
+            padding: 10px;
+            border-radius: 10px;
+            border: 3px solid #d4af37;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border-radius: 5px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .floor { background: #8D6E63; }
+        .wall { 
+            background: #5D4037; 
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .exit { 
+            background: #FBC02D;
+            animation: pulse 2s infinite;
+        }
+
+        .player {
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: bounce 1s infinite;
+            z-index: 2;
+        }
+
+        .lever { color: #FF9800; }
+        .lever.active { 
+            transform: rotate(45deg);
+            color: #4CAF50;
+        }
+
+        .stone { 
+            background: #795548;
+            border-radius: 5px;
+        }
+
+        .artifact {
+            animation: float 2s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        .key {
+            animation: float 2s ease-in-out infinite;
+            color: #ffd700;
+        }
+
+        .door {
+            background: #8B4513;
+            border: 2px solid #5D4037;
+        }
+        
+        .door.unlocked {
+            background: #8D6E63;
+            border: 2px dashed #4CAF50;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Game UI */
+        .game-ui {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #d4af37;
+            min-width: 300px;
+        }
+
+        .message-display {
+            background: rgba(212, 175, 55, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            min-height: 60px;
+            border: 1px solid #d4af37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-style: italic;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .control-item {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .objective-item {
+            background: rgba(212, 175, 55, 0.1);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #d4af37;
+        }
+
+        .objective-item.completed {
+            background: rgba(76, 175, 80, 0.2);
+            border-left-color: #4CAF50;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        /* Instructions */
+        .instructions {
+            text-align: left;
+            margin: 20px 0;
+            max-width: 800px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .instructions li {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .inventory-items {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .inventory-item {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 1.2em;
+        }
+
+        /* Notes panel */
+        .notes {
+            position: fixed;
+            right: 20px;
+            bottom: 80px;
+            width: 320px;
+            max-height: 60vh;
+            overflow: auto;
+            background: rgba(0,0,0,0.85);
+            border: 2px solid #d4af37;
+            padding: 16px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            z-index: 9999;
+            color: #fff;
+            font-size: 0.95em;
+        }
+
+        .notes h3 { margin-bottom: 8px; color: #ffd700 }
+        .notes p { margin-bottom: 8px; line-height: 1.4 }
+        .notes .close-notes { position: absolute; right: 8px; top: 8px; background: transparent; border: none; color: #ffd700; font-weight: bold; cursor: pointer }
+
+        /* Floating notes button */
+        #notes-btn {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 9998;
+            border-radius: 999px;
+            padding: 10px 14px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+        }
+
+        /* Maze board styles */
+        .maze-board {
+            display: grid;
+            gap: 0;
+            margin-top: 16px;
+            justify-content: center;
+        }
+
+        .maze-cell {
+            width: 34px;
+            height: 34px;
+            background: #8D6E63; /* floor */
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Door SVG wrapper for start/exit */
+        .door-svg {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 22px;
+            height: 28px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            transform-style: preserve-3d;
+        }
+
+        .door-svg svg { width: 100%; height: 100%; display: block; }
+
+        /* Exit door closed state */
+        .maze-cell.exit .door-svg { transform: translate(-50%, -50%) rotateY(0deg); }
+
+        /* Exit door unlocked: animate to look open */
+        .maze-cell.exit.unlocked .door-svg {
+            animation: doorOpen 0.6s forwards;
+            transform-origin: left center;
+        }
+
+        @keyframes doorOpen {
+            0% { transform: translate(-50%, -50%) rotateY(0deg); opacity: 1 }
+            100% { transform: translate(-45%, -50%) rotateY(-75deg); opacity: 0.85 }
+        }
+
+        .key-marker {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            pointer-events: none;
+        }
+
+        /* subtle cracked door overlay for doors that were triggered */
+        .door-crack {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: 2px;
+            background: repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 6px);
+            mix-blend-mode: overlay;
+            opacity: 0.9;
+        }
+
+        .object-marker {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            pointer-events: none;
+            opacity: 0.95;
+        }
+
+        .key-marker.picked {
+            animation: keyPickup 0.7s forwards;
+        }
+
+        @keyframes keyPickup {
+            0% { transform: translateY(0) scale(1); opacity: 1 }
+            50% { transform: translateY(-12px) scale(1.3); opacity: 0.9 }
+            100% { transform: translateY(-30px) scale(0.4); opacity: 0 }
+        }
+
+        /* Door opening animation when unlocked */
+        .maze-cell.exit.unlocked::after {
+            animation: openDoor 0.6s forwards;
+            transform-origin: left center;
+        }
+
+        @keyframes openDoor {
+            0% { transform: rotateY(0deg); opacity: 1 }
+            100% { transform: rotateY(-75deg) translateX(-6px); opacity: 0.6 }
+        }
+
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .modal.hidden { display: none !important; }
+
+        .modal-content {
+            background: #111;
+            padding: 20px 24px;
+            border-radius: 10px;
+            border: 2px solid #d4af37;
+            max-width: 420px;
+            color: #fff;
+            text-align: center;
+        }
+
+        .modal-buttons { margin-top: 14px; display:flex; gap:10px; justify-content:center }
+    </style>
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+        <h1>🏺 The Hidden Temple</h1>
+        <p>Embark on an epic adventure through ancient temples! Solve puzzles, find keys, and discover the Lost Relic of Light!</p>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🎮</div>
+                <h3>Interactive Puzzles</h3>
+                <p>Levers, keys, and artifacts to collect</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧩</div>
+                <h3>Brain-Teasing Puzzles</h3>
+                <p>Solve ancient mechanisms</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔑</div>
+                <h3>Key System</h3>
+                <p>Find keys to unlock doors</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Dynamic Gameplay</h3>
+                <p>Real-time interactions</p>
+            </div>
+        </div>
+
+        <div class="button-container">
+            <button id="start-btn" class="btn btn-large">🚀 Begin Adventure</button>
+            <button id="how-to-play-btn" class="btn">❓ How to Play</button>
+        </div>
+    </div>
+
+    <!-- How to Play Screen -->
+    <div id="how-to-play-screen" class="screen hidden">
+        <h1>🎮 How to Play</h1>
+        
+        <div class="instructions">
+            <h2>Your Mission</h2>
+            <p>Navigate through ancient temples, find keys, unlock doors, and collect artifacts!</p>
+            
+            <h2>Game Controls</h2>
+            <div class="controls-grid">
+                <div class="control-item">
+                    <strong>Arrow Keys</strong><br>
+                    Move your character
+                </div>
+                <div class="control-item">
+                    <strong>I key</strong><br>
+                    Interact with objects
+                </div>
+                <div class="control-item">
+                    <strong>R Key</strong><br>
+                    Restart level
+                </div>
+                <div class="control-item">
+                    <strong>H Key</strong><br>
+                    Show hint
+                </div>
+            </div>
+
+            <h2>Game Elements</h2>
+            <div class="objective-item">🧱 <strong>Walls</strong> - Cannot pass through</div>
+            <div class="objective-item">⚙️ <strong>Levers</strong> - Activate to open paths</div>
+            <div class="objective-item">🔑 <strong>Keys</strong> - Unlock doors</div>
+            <div class="objective-item">🚪 <strong>Doors</strong> - Require keys to open</div>
+            <div class="objective-item">💎 <strong>Artifacts</strong> - Collect to complete levels</div>
+            <div class="objective-item">🪨 <strong>Stones</strong> - Can be pushed</div>
+
+            <h2>How to Win</h2>
+            <ol>
+                <li>Explore each room thoroughly</li>
+                <li>Find keys and artifacts</li>
+                <li>Activate levers to open paths</li>
+                <li>Unlock doors with keys</li>
+                <li>Collect all artifacts</li>
+                <li>Find the golden exit</li>
+            </ol>
+        </div>
+
+        <button id="back-from-instructions" class="btn">⬅️ Back to Main Menu</button>
+    </div>
+
+    <!-- NOTE: Game screen and game logic removed as requested. "How to Play" screen is retained. -->
+
+    <!-- Levels selection screen -->
+    <div id="levels-screen" class="screen hidden">
+        <h1>🗺️ Select Level</h1>
+        <p>Choose a level to play (1–5)</p>
+        <div class="levels-list" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:18px;">
+            <button class="level-btn btn">Level 1</button>
+            <button class="level-btn btn">Level 2</button>
+            <button class="level-btn btn">Level 3</button>
+            <button class="level-btn btn">Level 4</button>
+            <button class="level-btn btn">Level 5</button>
+        </div>
+        <div style="margin-top:18px;"><button id="levels-back" class="btn">⬅️ Back</button></div>
+    </div>
+
+    <!-- Level placeholder screen (shows chosen level) -->
+    <div id="level-screen" class="screen hidden">
+        <h1 id="selected-level-title">Level</h1>
+        <div style="display:flex;gap:16px;align-items:center;margin-bottom:10px;">
+            <div id="timer-display" style="font-weight:bold;">Time: 02:00</div>
+            <div id="hud-keys" style="font-weight:bold;">Keys: 0/1</div>
+            <div id="hud-traps" style="font-weight:bold;">Traps: 0</div>
+        </div>
+        <p id="maze-info">Maze will appear below.</p>
+        <div id="maze-board" class="maze-board" aria-live="polite"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:12px;">
+            <button id="pause-btn" class="btn">Pause</button>
+            <div style="flex:1"></div>
+            <button id="level-back" class="btn">⬅️ Back to Levels</button>
+            <button id="level-menu" class="btn">🏠 Main Menu</button>
+        </div>
+        <div id="paused-overlay" class="hidden" style="position:absolute;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;">
+            <div style="color:#ffd700;font-size:24px;margin-bottom:12px;">PAUSED</div>
+            <button id="resume-btn" class="btn">Resume</button>
+        </div>
+    </div>
+
+    <!-- Notes panel + button -->
+    <button id="notes-btn" class="btn" title="Toggle Notes (N)">📝 Notes (N)</button>
+
+    <div id="notes-panel" class="notes hidden" aria-hidden="true">
+        <button class="close-notes" aria-label="Close notes">✕</button>
+        <h3>Notes</h3>
+        <p>Use the <strong>N</strong> key (or the Notes button) to toggle these notes.</p>
+        <p><strong>Quick tips</strong></p>
+        <ul>
+            <li>Arrow keys — Move</li>
+            <li>I — Interact with objects</li>
+            <li>R — Restart</li>
+            <li>H — Show hint</li>
+        </ul>
+        <p>You can edit this panel to add developer notes or gameplay hints.</p>
+    </div>
+
+    <!-- Modal for messages (time up, level cleared) -->
+    <div id="modal" class="modal hidden" aria-hidden="true">
+        <div class="modal-content">
+            <p id="modal-text">Message</p>
+            <div class="modal-buttons">
+                <button id="modal-ok" class="btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Minimal navigation script: keep Start -> How to Play and How to Play -> Back
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            const el = document.getElementById(screenId);
+            if (el) el.classList.remove('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const startBtn = document.getElementById('start-btn');
+            const howToBtn = document.getElementById('how-to-play-btn');
+            const backBtn = document.getElementById('back-from-instructions');
+
+            // Begin Adventure now opens the Levels selection screen
+            if (startBtn) startBtn.addEventListener('click', () => showScreen('levels-screen'));
+            if (howToBtn) howToBtn.addEventListener('click', () => showScreen('how-to-play-screen'));
+            if (backBtn) backBtn.addEventListener('click', () => showScreen('start-screen'));
+
+            // Notes UI
+            const notesBtn = document.getElementById('notes-btn');
+            const notesPanel = document.getElementById('notes-panel');
+            const notesClose = notesPanel ? notesPanel.querySelector('.close-notes') : null;
+
+            function toggleNotes(show) {
+                if (!notesPanel) return;
+                const isHidden = notesPanel.classList.contains('hidden');
+                const willShow = typeof show === 'boolean' ? show : isHidden;
+                if (willShow) {
+                    notesPanel.classList.remove('hidden');
+                    notesPanel.setAttribute('aria-hidden', 'false');
+                } else {
+                    notesPanel.classList.add('hidden');
+                    notesPanel.setAttribute('aria-hidden', 'true');
+                }
+            }
+
+            if (notesBtn) notesBtn.addEventListener('click', () => toggleNotes());
+            if (notesClose) notesClose.addEventListener('click', () => toggleNotes(false));
+
+            // Key handler: N toggles notes, Space pauses/resumes in-level, Arrow keys move
+            document.addEventListener('keydown', (e) => {
+                // ignore if focus is in an input or textarea
+                const tag = document.activeElement && document.activeElement.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+                if (e.key === 'n' || e.key === 'N') {
+                    e.preventDefault();
+                    toggleNotes();
+                    return;
+                }
+
+                // Space toggles pause/resume when inside the level screen
+                const levelScreenEl = document.getElementById('level-screen');
+                const levelVisible = levelScreenEl && !levelScreenEl.classList.contains('hidden');
+                // check common space values across browsers
+                if (levelVisible && (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar')) {
+                    e.preventDefault();
+                    // toggle pause/resume
+                    if (typeof setPaused === 'function') {
+                        setPaused(!paused);
+                    }
+                    return;
+                }
+
+                // Movement when in a level room: Arrow keys
+                // (levelVisible already computed above)
+                if (levelVisible && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                    e.preventDefault();
+                    switch (e.key) {
+                        case 'ArrowUp': tryMove(0, -1); break;
+                        case 'ArrowDown': tryMove(0, 1); break;
+                        case 'ArrowLeft': tryMove(-1, 0); break;
+                        case 'ArrowRight': tryMove(1, 0); break;
+                    }
+                }
+            });
+
+            // Maze generation utilities (recursive backtracker)
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            function generateMaze(n, levelNum = 1) {
+                // Create n x n grid of cells with all walls present
+                const grid = [];
+                for (let y = 0; y < n; y++) {
+                    const row = [];
+                    for (let x = 0; x < n; x++) {
+                        row.push({
+                            walls: { top: true, right: true, bottom: true, left: true },
+                            visited: false
+                        });
+                    }
+                    grid.push(row);
+                }
+
+                const stack = [];
+                const start = { x: 0, y: 0 };
+                grid[start.y][start.x].visited = true;
+                stack.push(start);
+
+                const dirs = [
+                    { dx: 0, dy: -1, dir: 'top', opp: 'bottom' },
+                    { dx: 1, dy: 0, dir: 'right', opp: 'left' },
+                    { dx: 0, dy: 1, dir: 'bottom', opp: 'top' },
+                    { dx: -1, dy: 0, dir: 'left', opp: 'right' }
+                ];
+
+                while (stack.length > 0) {
+                    const current = stack[stack.length - 1];
+                    const x = current.x, y = current.y;
+
+                    const neighbors = [];
+                    shuffle(dirs).forEach(d => {
+                        const nx = x + d.dx, ny = y + d.dy;
+                        if (nx >= 0 && nx < n && ny >= 0 && ny < n && !grid[ny][nx].visited) {
+                            neighbors.push({ x: nx, y: ny, dir: d.dir, opp: d.opp });
+                        }
+                    });
+
+                    if (neighbors.length > 0) {
+                        const pick = neighbors[Math.floor(Math.random() * neighbors.length)];
+                        // remove wall between current and pick
+                        grid[y][x].walls[pick.dir] = false;
+                        grid[pick.y][pick.x].walls[pick.opp] = false;
+                        grid[pick.y][pick.x].visited = true;
+                        stack.push({ x: pick.x, y: pick.y });
+                    } else {
+                        stack.pop();
+                    }
+                }
+
+                // place a key randomly (not on start [0,0] or exit [n-1,n-1])
+                const possible = [];
+                for (let y = 0; y < n; y++) {
+                    for (let x = 0; x < n; x++) {
+                        if ((x === 0 && y === 0) || (x === n - 1 && y === n - 1)) continue;
+                        possible.push({x, y});
+                    }
+                }
+                if (possible.length > 0) {
+                    const pick = possible[Math.floor(Math.random() * possible.length)];
+                    grid[pick.y][pick.x].hasKey = true;
+                }
+
+                // track whether exit is locked for this grid
+                grid.exitLocked = true;
+                grid.initialKeyCount = 1; // one key per room
+
+                // place traps and levers: a few per room, avoid start and exit and key
+                grid.traps = [];
+                grid.levers = [];
+                const placeable = [];
+                for (let yy = 0; yy < n; yy++) {
+                    for (let xx = 0; xx < n; xx++) {
+                        if ((xx === 0 && yy === 0) || (xx === n - 1 && yy === n - 1)) continue;
+                        if (grid[yy][xx].hasKey) continue;
+                        placeable.push({x: xx, y: yy});
+                    }
+                }
+                shuffle(placeable);
+                // place a random number of levers (small) and traps constrained per level
+                // leverCount: between 1 and ceil(n/6)
+                const leverMax = Math.max(1, Math.ceil(n / 6));
+                const leverCount = Math.min(placeable.length, Math.max(1, Math.floor(Math.random() * leverMax) || 1));
+
+                // Doors: create multiple doors on the perimeter, one correct door and others act as trap-doors
+                const perimeter = [];
+                for (let yy = 0; yy < n; yy++) {
+                    for (let xx = 0; xx < n; xx++) {
+                        if (xx === 0 && yy === 0) continue; // skip start
+                        if (!(xx === 0 || yy === 0 || xx === n - 1 || yy === n - 1)) continue; // only perimeter
+                        // avoid key and start
+                        if (grid[yy][xx].hasKey) continue;
+                        perimeter.push({x: xx, y: yy});
+                    }
+                }
+                shuffle(perimeter);
+                grid.doors = [];
+                if (perimeter.length > 0) {
+                    // choose between 2 and min(4, ceil(n/6)) doors
+                    const doorMin = 2;
+                    const doorMax = Math.min(4, Math.max(2, Math.ceil(n / 6)));
+                    const doorCount = Math.min(perimeter.length, doorMin + Math.floor(Math.random() * (doorMax - doorMin + 1)));
+                    for (let i = 0; i < doorCount; i++) {
+                        const p = perimeter.pop();
+                        grid.doors.push(p);
+                        // mark cell as door (will mark correct later)
+                        grid[p.y][p.x].isDoor = true;
+                    }
+                    // select one correct door
+                    const correctIdx = Math.floor(Math.random() * grid.doors.length);
+                    const correct = grid.doors[correctIdx];
+                    grid.correctDoor = correct;
+                    // remove door positions from placeable so we don't double-place traps there
+                    for (let d of grid.doors) {
+                        for (let i = placeable.length - 1; i >= 0; i--) {
+                            if (placeable[i].x === d.x && placeable[i].y === d.y) placeable.splice(i, 1);
+                        }
+                    }
+                } else {
+                    grid.doors = [];
+                    grid.correctDoor = null;
+                }
+
+                // trapCount: enforce fixed small range for all levels (6-7 traps per room)
+                const minTraps = 6;
+                const maxTraps = 7;
+                const desiredTrapCount = Math.min(placeable.length, minTraps + Math.floor(Math.random() * (maxTraps - minTraps + 1)));
+                const trapCount = Math.min(placeable.length, desiredTrapCount);
+                for (let i = 0; i < leverCount && placeable.length > 0; i++) {
+                    const p = placeable.pop();
+                    grid[p.y][p.x].hasLever = true;
+                    grid[p.y][p.x].leverActivated = false;
+                    grid.levers.push(p);
+                }
+                // trap types: resetstart and puzzle only (remove death/skull trap)
+                const trapTypes = ['resetstart','puzzle'];
+                for (let i = 0; i < trapCount && placeable.length > 0; i++) {
+                    const p = placeable.pop();
+                    const t = trapTypes[Math.floor(Math.random() * trapTypes.length)];
+                    grid[p.y][p.x].trapType = t;
+                    grid[p.y][p.x].trapSolved = false;
+                    grid.traps.push({x: p.x, y: p.y, type: t});
+                }
+
+                // assign trap behavior to non-correct doors (if any)
+                if (grid.doors && grid.doors.length > 0) {
+                    for (let d of grid.doors) {
+                        // skip correct door
+                        if (grid.correctDoor && d.x === grid.correctDoor.x && d.y === grid.correctDoor.y) {
+                            grid[d.y][d.x].isCorrectDoor = true;
+                            continue;
+                        }
+                        // other doors become trap-doors — pick a trap type
+                        const t = trapTypes[Math.floor(Math.random() * trapTypes.length)];
+                        grid[d.y][d.x].trapType = t;
+                        grid[d.y][d.x].trapSolved = false;
+                        grid.traps.push({x: d.x, y: d.y, type: t, doorTrap: true});
+                    }
+                }
+
+                return grid;
+            }
+
+            function renderMaze(grid) {
+                const n = grid.length;
+                const board = document.getElementById('maze-board');
+                const info = document.getElementById('maze-info');
+                board.style.gridTemplateColumns = `repeat(${n}, 34px)`;
+                board.innerHTML = '';
+
+                for (let y = 0; y < n; y++) {
+                    for (let x = 0; x < n; x++) {
+                        const cell = grid[y][x];
+                        const div = document.createElement('div');
+                        div.className = 'maze-cell';
+                        // set borders for walls
+                        div.style.borderTop = cell.walls.top ? '4px solid #5D4037' : '4px solid transparent';
+                        div.style.borderRight = cell.walls.right ? '4px solid #5D4037' : '4px solid transparent';
+                        div.style.borderBottom = cell.walls.bottom ? '4px solid #5D4037' : '4px solid transparent';
+                        div.style.borderLeft = cell.walls.left ? '4px solid #5D4037' : '4px solid transparent';
+
+                        // start and exit markers
+                        if (x === 0 && y === 0) div.classList.add('start');
+                        if (x === n - 1 && y === n - 1) div.classList.add('exit');
+
+                        board.appendChild(div);
+                    }
+                }
+
+                    // Only show room name on the UI — the maze size is omitted
+                    if (info) info.textContent = `Room`;
+            }
+
+            // Levels UI handlers
+            const levelBtns = document.querySelectorAll('.level-btn');
+            const levelsBack = document.getElementById('levels-back');
+            const levelScreen = document.getElementById('level-screen');
+            const selectedTitle = document.getElementById('selected-level-title');
+            const levelBack = document.getElementById('level-back');
+            const levelMenu = document.getElementById('level-menu');
+
+            // Game state for rooms and player
+            let currentRooms = null; // array of grids
+            let currentRoomIndex = 0;
+            let playerPos = { x: 0, y: 0 };
+            let currentLevelNum = null; // track which level is active so we can restart it on timeout
+            let paused = false; // whether the current level is paused (only inside level screen)
+
+            function renderCurrentRoom() {
+                if (!currentRooms) return;
+                const grid = currentRooms[currentRoomIndex];
+                const n = grid.length;
+                const board = document.getElementById('maze-board');
+                board.style.gridTemplateColumns = `repeat(${n}, 34px)`;
+                board.innerHTML = '';
+
+                for (let y = 0; y < n; y++) {
+                    for (let x = 0; x < n; x++) {
+                        const cell = grid[y][x];
+                        const div = document.createElement('div');
+                        div.className = 'maze-cell';
+                        div.style.borderTop = cell.walls.top ? '4px solid #5D4037' : '4px solid transparent';
+                        div.style.borderRight = cell.walls.right ? '4px solid #5D4037' : '4px solid transparent';
+                        div.style.borderBottom = cell.walls.bottom ? '4px solid #5D4037' : '4px solid transparent';
+                        div.style.borderLeft = cell.walls.left ? '4px solid #5D4037' : '4px solid transparent';
+
+                        // player
+                        if (x === playerPos.x && y === playerPos.y) {
+                            const p = document.createElement('div');
+                            p.style.width = '100%';
+                            p.style.height = '100%';
+                            p.style.display = 'flex';
+                            p.style.alignItems = 'center';
+                            p.style.justifyContent = 'center';
+                            p.textContent = '🧝';
+                            div.appendChild(p);
+                        }
+
+                        if (x === 0 && y === 0) {
+                            div.classList.add('start');
+                            // start door SVG
+                            const startDoor = document.createElement('div');
+                            startDoor.className = 'door-svg';
+                            startDoor.innerHTML = `
+                                <svg viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <rect x="6" y="8" width="44" height="64" rx="3" fill="#6b3f1f" stroke="#4a2b16" stroke-width="2" />
+                                    <rect x="14" y="16" width="28" height="44" fill="#8b5e34" />
+                                    <circle cx="46" cy="40" r="3" fill="#ffd700" />
+                                </svg>`;
+                            div.appendChild(startDoor);
+                        }
+
+                        // door rendering: support multiple doors (grid.doors) with one correct door
+                        if (cell.isDoor) {
+                            div.classList.add('exit');
+                            // exit door SVG (will animate open when unlocked)
+                            const exitDoor = document.createElement('div');
+                            exitDoor.className = 'door-svg';
+                            exitDoor.innerHTML = `
+                                <svg viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <rect x="6" y="8" width="44" height="64" rx="3" fill="#5a3318" stroke="#3f2612" stroke-width="2" />
+                                    <rect class="door-panel" x="14" y="16" width="28" height="44" fill="#7a4a20" />
+                                    <circle cx="46" cy="40" r="3" fill="#f6d34d" />
+                                </svg>`;
+                            div.appendChild(exitDoor);
+                            // if this door was triggered earlier, show a subtle cracked overlay
+                            if (cell.doorTriggered) {
+                                const crack = document.createElement('div');
+                                crack.className = 'door-crack';
+                                div.appendChild(crack);
+                            }
+                        }
+
+                        // key marker
+                        if (cell.hasKey) {
+                            const k = document.createElement('div');
+                            k.className = 'key-marker';
+                            k.textContent = '🔑';
+                            div.appendChild(k);
+                        }
+
+                        // lever marker
+                        if (cell.hasLever) {
+                            const l = document.createElement('div');
+                            l.className = 'object-marker';
+                            l.textContent = cell.leverActivated ? '🟢' : '⚙️';
+                            l.title = 'Lever';
+                            div.appendChild(l);
+                        }
+
+                        // trap marker (hide if solved). Do not show question mark on dummy (wrong) doors
+                        if (cell.trapType && !cell.trapSolved) {
+                            // if this cell is a door and not the correct door, don't show the marker
+                            if (cell.isDoor && !cell.isCorrectDoor) {
+                                // intentionally left blank: dummy doors are indistinguishable
+                            } else {
+                                const t = document.createElement('div');
+                                t.className = 'object-marker';
+                                // use question mark for puzzle and reset-to-start traps
+                                let icon = '❓';
+                                t.textContent = icon;
+                                t.title = 'Trap';
+                                div.appendChild(t);
+                            }
+                        }
+
+                        // mark correct door unlocked visually if grid.exitLocked === false
+                        const gridRef = currentRooms ? currentRooms[currentRoomIndex] : null;
+                        if (cell.isDoor && gridRef) {
+                            if (cell.isCorrectDoor && gridRef.exitLocked === false) {
+                                div.classList.add('unlocked');
+                            }
+                        }
+
+                        board.appendChild(div);
+                    }
+                }
+
+                const info = document.getElementById('maze-info');
+                if (info) {
+                    const roomName = grid.roomName || `Room`;
+                    info.textContent = `${roomName} — Room ${currentRoomIndex + 1}/${currentRooms.length}`;
+                }
+                updateHudKeys();
+                updateTrapCounter();
+            }
+
+            function updateHudKeys() {
+                const hud = document.getElementById('hud-keys');
+                if (!hud || !currentRooms) return;
+                const grid = currentRooms[currentRoomIndex];
+                const remaining = grid.some(r => r.some(c => c.hasKey)) ? 1 : 0;
+                const collected = (grid.initialKeyCount || 1) - remaining;
+                hud.textContent = `Keys: ${collected}/${grid.initialKeyCount || 1}`;
+            }
+
+            function updateTrapCounter() {
+                const hud = document.getElementById('hud-traps');
+                if (!hud || !currentRooms) return;
+                const grid = currentRooms[currentRoomIndex];
+                // Use grid.traps (keeps entries for placed traps); count only unsolved traps
+                let count = 0;
+                if (Array.isArray(grid.traps)) {
+                    for (const t of grid.traps) {
+                        const cx = t.x, cy = t.y;
+                        if (grid[cy] && grid[cy][cx] && !grid[cy][cx].trapSolved) count++;
+                    }
+                }
+                hud.textContent = `Traps: ${count}`;
+            }
+
+            function startLevel(levelNum) {
+                // always (re)start a level when selected
+                const size = 7 + levelNum + 5; // was 7+levelNum; now +5 (level1 -> 13)
+                currentLevelNum = levelNum;
+                paused = false;
+                currentRooms = [generateMaze(size, levelNum), generateMaze(size, levelNum), generateMaze(size, levelNum)];
+                currentRoomIndex = 0;
+                playerPos = { x: 0, y: 0 };
+                // assign unique human-friendly room names (choose without repetition)
+                const namePool = [
+                    'Antechamber', 'Hall of Echoes', 'Inner Sanctum', 'Sunken Gallery', 'Forgotten Atrium',
+                    'Temple Vestibule', 'Chamber of Whispers', 'Gilded Corridor', 'Obsidian Hall', 'Cryptic Alcove',
+                    "Scribe's Nook", 'Echoing Passage', 'Azure Antechamber', 'Verdant Wing', 'Moonlit Foyer'
+                ];
+                shuffle(namePool);
+                for (let i = 0; i < currentRooms.length; i++) {
+                    if (!currentRooms[i]) continue;
+                    const name = namePool[i] || `Room ${i+1}`;
+                    currentRooms[i].roomName = name;
+                }
+                renderCurrentRoom();
+                resetTimer();
+                startTimer();
+                showScreen('level-screen');
+            }
+
+            // movement: check walls on current cell
+            function tryMove(dx, dy) {
+                if (!currentRooms) return;
+                const grid = currentRooms[currentRoomIndex];
+                const n = grid.length;
+                const x = playerPos.x, y = playerPos.y;
+                const cell = grid[y][x];
+
+                // determine direction
+                if (dx === 1 && dy === 0) { // right
+                    if (cell.walls.right) return; // blocked
+                    playerPos.x = Math.min(n - 1, x + 1);
+                } else if (dx === -1 && dy === 0) { // left
+                    if (cell.walls.left) return;
+                    playerPos.x = Math.max(0, x - 1);
+                } else if (dx === 0 && dy === 1) { // down
+                    if (cell.walls.bottom) return;
+                    playerPos.y = Math.min(n - 1, y + 1);
+                } else if (dx === 0 && dy === -1) { // up
+                    if (cell.walls.top) return;
+                    playerPos.y = Math.max(0, y - 1);
+                }
+
+                renderCurrentRoom();
+                checkForKeyPickup();
+                checkRoomComplete();
+            }
+
+            function checkForKeyPickup() {
+                if (!currentRooms) return;
+                const grid = currentRooms[currentRoomIndex];
+                const cell = grid[playerPos.y][playerPos.x];
+                // handle traps and levers first
+                handleCellEvents(grid, playerPos.x, playerPos.y);
+                if (cell.hasKey) {
+                    // animate the key pickup on the DOM element, then remove
+                    const board = document.getElementById('maze-board');
+                    const n = grid.length;
+                    const idx = playerPos.y * n + playerPos.x;
+                    const cellEl = board.children[idx];
+                    if (cellEl) {
+                        const keyEl = cellEl.querySelector('.key-marker');
+                        if (keyEl) {
+                            keyEl.classList.add('picked');
+                            keyEl.addEventListener('animationend', () => {
+                                cell.hasKey = false;
+                                // update HUD
+                                updateHudKeys();
+                                // if no keys left, unlock door for this room
+                                const stillHasKey = grid.some(r => r.some(c => c.hasKey));
+                                if (!stillHasKey) {
+                                    grid.exitLocked = false;
+                                }
+                                renderCurrentRoom();
+                                // if we just unlocked the door, show small message
+                                if (!grid.exitLocked) {
+                                    const info = document.getElementById('maze-info');
+                                    if (info) info.textContent = '� Door unlocked! Head to the exit.';
+                                }
+                            }, { once: true });
+                        } else {
+                            // fallback: just remove
+                            cell.hasKey = false;
+                            updateHudKeys();
+                        }
+                    } else {
+                        cell.hasKey = false;
+                        updateHudKeys();
+                    }
+                }
+            }
+
+            function checkRoomComplete() {
+                const grid = currentRooms[currentRoomIndex];
+                const n = grid.length;
+                // If player stepped onto a door cell, determine if it's the correct, unlocked door
+                const curCell = grid[playerPos.y][playerPos.x];
+                if (curCell && curCell.isDoor) {
+                    const stillHasKey = grid.some(row => row.some(c => c.hasKey));
+                    if (curCell.isCorrectDoor) {
+                        if (stillHasKey) {
+                            const info = document.getElementById('maze-info');
+                            if (info) info.textContent = '🚪 The door is locked! Find the key first.';
+                            return;
+                        }
+                        // correct door and unlocked -> advance
+                        if (currentRoomIndex < 2) {
+                            currentRoomIndex++;
+                            playerPos = { x: 0, y: 0 };
+                            renderCurrentRoom();
+                            resetTimer();
+                            startTimer();
+                            const info = document.getElementById('maze-info');
+                            if (info) info.textContent = `Entered Room ${currentRoomIndex + 1}/3`;
+                        } else {
+                            stopTimer();
+                            showModal('Level cleared! Returning to Levels.', () => {
+                                currentRooms = null;
+                                showScreen('levels-screen');
+                            });
+                        }
+                    } else {
+                        // stepped on a wrong door — it behaves as a trap and will be handled by handleCellEvents
+                        // but guard here in case trap isn't set: treat as resetstart
+                        if (!curCell.trapType) {
+                            playerPos = { x: 0, y: 0 };
+                            renderCurrentRoom();
+                            showModal('This door was a trap! You were sent back to the start of the room.', () => {});
+                        }
+                    }
+                }
+            }
+
+            // handle traps and levers when player steps into a cell
+            function handleCellEvents(grid, x, y) {
+                const cell = grid[y][x];
+                if (!cell) return;
+
+                // lever: activate and open a nearby wall (unlock new route)
+                if (cell.hasLever && !cell.leverActivated) {
+                    cell.leverActivated = true;
+                    // try to remove a wall to create a new path
+                    const dirs = [
+                        {dx:0,dy:-1,dir:'top',opp:'bottom'},
+                        {dx:1,dy:0,dir:'right',opp:'left'},
+                        {dx:0,dy:1,dir:'bottom',opp:'top'},
+                        {dx:-1,dy:0,dir:'left',opp:'right'}
+                    ];
+                    // find a neighbor where wall exists and remove it
+                    for (let d of shuffle(dirs.slice())) {
+                        const nx = x + d.dx, ny = y + d.dy;
+                        if (nx >= 0 && nx < grid.length && ny >= 0 && ny < grid.length) {
+                            if (cell.walls[d.dir]) {
+                                cell.walls[d.dir] = false;
+                                grid[ny][nx].walls[d.opp] = false;
+                                break;
+                            }
+                        }
+                    }
+                    renderCurrentRoom();
+                    showModal('You pulled a lever — a new passage opened!', () => {});
+                    return;
+                }
+
+                // traps
+                if (cell.trapType && !cell.trapSolved) {
+                    // convert any legacy 'death' types to 'resetstart' so skull traps no longer reset rooms
+                    if (cell.trapType === 'death') cell.trapType = 'resetstart';
+
+                    const t = cell.trapType;
+                    if (t === 'resetstart') {
+                        // send player to start of current room without resetting time
+                        playerPos = { x: 0, y: 0 };
+                        // mark this trap as solved/consumed so it disappears after visiting
+                        cell.trapSolved = true;
+                        // if this was a door trap, mark it triggered so we show a subtle visual cue
+                        if (cell.isDoor) cell.doorTriggered = true;
+                        // remove from grid.traps list
+                        if (Array.isArray(grid.traps)) {
+                            grid.traps = grid.traps.filter(tt => !(tt.x === x && tt.y === y));
+                        }
+                        renderCurrentRoom();
+                        showModal('A trap sprung! You were sent back to the room start.', () => {});
+                        return;
+                    }
+                    
+                    if (t === 'puzzle') {
+                        // simple math puzzle using prompt(); if solved, mark trapSolved true
+                        const a = Math.floor(Math.random() * 9) + 1;
+                        const b = Math.floor(Math.random() * 9) + 1;
+                        const ans = window.prompt(`Solve to disarm the trap: ${a} + ${b} = ?`);
+                        if (ans !== null && parseInt(ans,10) === (a + b)) {
+                            // solved: mark consumed and remove from trap list
+                            cell.trapSolved = true;
+                            // if this was a door trap, mark it triggered so we show a subtle visual cue
+                            if (cell.isDoor) cell.doorTriggered = true;
+                            if (Array.isArray(grid.traps)) {
+                                grid.traps = grid.traps.filter(tt => !(tt.x === x && tt.y === y));
+                            }
+                            renderCurrentRoom();
+                            showModal('Correct! You disarmed the trap.', () => {});
+                        } else {
+                            // fail: punish by sending back to start; do not consume the trap (player can try again)
+                            playerPos = { x: 0, y: 0 };
+                            renderCurrentRoom();
+                            showModal('Wrong! The trap reset you to the start of the room.', () => {});
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // Timer: 120 seconds (2 minutes) per room
+            let timerSeconds = 120;
+            let timerInterval = null;
+
+            function formatTime(s) {
+                const mm = Math.floor(s / 60).toString().padStart(2, '0');
+                const ss = (s % 60).toString().padStart(2, '0');
+                return `${mm}:${ss}`;
+            }
+
+            function updateTimerDisplay() {
+                const disp = document.getElementById('timer-display');
+                if (disp) disp.textContent = `Time: ${formatTime(timerSeconds)}`;
+            }
+
+            function timerTick() {
+                timerSeconds--;
+                updateTimerDisplay();
+                if (timerSeconds <= 0) {
+                    stopTimer();
+                    handleTimeUp();
+                }
+            }
+
+            function startTimer() {
+                stopTimer();
+                timerInterval = setInterval(timerTick, 1000);
+                updateTimerDisplay();
+            }
+
+            function stopTimer() {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            }
+
+            function resetTimer() {
+                timerSeconds = 120;
+                updateTimerDisplay();
+            }
+
+            function handleTimeUp() {
+                // Time's up for the room/level — restart the current level if possible
+                stopTimer();
+                if (currentLevelNum) {
+                    showModal('Time is up! Restarting current level.', () => {
+                        // restart same level (preserves level number)
+                        startLevel(currentLevelNum);
+                    });
+                } else {
+                    // fallback: go back to main menu
+                    showModal('Time is up! Returning to main menu.', () => {
+                        currentRooms = null;
+                        showScreen('start-screen');
+                    });
+                }
+            }
+
+            // wire level buttons to startLevel
+            levelBtns.forEach(btn => {
+                btn.addEventListener('click', (ev) => {
+                    const text = ev.currentTarget.textContent || 'Level';
+                    selectedTitle.textContent = text;
+                    const match = text.match(/(\d+)/);
+                    const levelNum = match ? parseInt(match[0], 10) : 1;
+                    startLevel(levelNum);
+                });
+            });
+
+            if (levelsBack) levelsBack.addEventListener('click', () => showScreen('start-screen'));
+            if (levelBack) levelBack.addEventListener('click', () => {
+                // leaving the level screen clears the current run (no paused state preserved)
+                if (timerInterval) stopTimer();
+                paused = false;
+                currentRooms = null;
+                currentLevelNum = null;
+                showScreen('levels-screen');
+            });
+            if (levelMenu) levelMenu.addEventListener('click', () => {
+                // stop timer and clear state when returning to main menu
+                if (timerInterval) stopTimer();
+                paused = false;
+                currentRooms = null;
+                currentLevelNum = null;
+                showScreen('start-screen');
+            });
+
+            // Modal helpers
+            const modal = document.getElementById('modal');
+            const modalText = document.getElementById('modal-text');
+            const modalOk = document.getElementById('modal-ok');
+
+            // Pause/Resume UI in level screen
+            const pauseBtn = document.getElementById('pause-btn');
+            const pausedOverlay = document.getElementById('paused-overlay');
+            const resumeBtn = document.getElementById('resume-btn');
+
+            function setPaused(val) {
+                paused = !!val;
+                if (paused) {
+                    // stop timer but keep state
+                    stopTimer();
+                    if (pausedOverlay) pausedOverlay.classList.remove('hidden');
+                    if (pauseBtn) pauseBtn.textContent = 'Resume';
+                } else {
+                    if (pausedOverlay) pausedOverlay.classList.add('hidden');
+                    if (pauseBtn) pauseBtn.textContent = 'Pause';
+                    // resume timer
+                    startTimer();
+                }
+            }
+
+            if (pauseBtn) pauseBtn.addEventListener('click', () => {
+                setPaused(!paused);
+            });
+            if (resumeBtn) resumeBtn.addEventListener('click', () => setPaused(false));
+
+            function showModal(text, cb) {
+                if (!modal) {
+                    // fallback to alert
+                    alert(text);
+                    if (typeof cb === 'function') cb();
+                    return;
+                }
+                modalText.textContent = text;
+                modal.classList.remove('hidden');
+                modal.setAttribute('aria-hidden','false');
+
+                function onOk() {
+                    modal.classList.add('hidden');
+                    modal.setAttribute('aria-hidden','true');
+                    modalOk.removeEventListener('click', onOk);
+                    if (typeof cb === 'function') cb();
+                }
+
+                modalOk.addEventListener('click', onOk);
+            }
+        });
+    </script>
+</body>
+</html>
