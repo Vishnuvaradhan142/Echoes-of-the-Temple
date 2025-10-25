@@ -21,25 +21,22 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 0; /* remove browser padding so backgrounds can be full-bleed */
+            margin: 0;
+            overflow-x: hidden;
         }
 
         /* Ancient parchment container */
         .game-container {
-            width: 100%;
-            max-width: 980px;
-            background-color: #efe6d0;
-            border-radius: 18px;
-            border: 8px solid rgba(106,68,38,0.95);
-            box-shadow: 0 18px 60px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.06);
+            width: 100vw;
+            max-width: none;
+            min-height: 100vh;
+            background-color: transparent; /* allow child screens' backgrounds to show full-bleed */
+            border-radius: 0;
+            border: 0;
+            box-shadow: none;
             overflow: hidden;
             position: relative;
-            /* simulated parchment texture */
-            background-image:
-                radial-gradient(circle at 10% 10%, rgba(255,240,210,0.06) 0 6%, transparent 8%),
-                radial-gradient(circle at 90% 20%, rgba(220,200,150,0.04) 0 6%, transparent 8%),
-                repeating-linear-gradient(45deg, rgba(0,0,0,0.01) 0 1px, transparent 1px 6px);
-            background-blend-mode: multiply, overlay, normal;
         }
 
         /* subtle stained parchment overlay */
@@ -72,10 +69,9 @@
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
-            /* fill the viewport (account for body padding) */
-            min-height: calc(100vh - 40px);
-            width: calc(100% - 40px);
-            margin: 0 auto;
+            min-height: 100vh;
+            width: 100vw;
+            margin: 0;
             background-attachment: fixed;
             position: relative;
             overflow: hidden;
@@ -87,9 +83,9 @@
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
-            min-height: calc(100vh - 40px);
-            width: calc(100% - 40px);
-            margin: 0 auto;
+            min-height: 100vh;
+            width: 100vw;
+            margin: 0;
             background-attachment: fixed;
             position: relative;
             overflow: hidden;
@@ -130,10 +126,9 @@
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
-            /* fill the viewport (account for body padding) */
-            min-height: calc(100vh - 40px);
-            width: calc(100% - 40px);
-            margin: 0 auto;
+            min-height: 100vh;
+            width: 100vw;
+            margin: 0;
             background-attachment: fixed;
             position: relative;
             overflow: hidden;
@@ -633,7 +628,7 @@
             justify-content: center;
             font-size: 18px;
             pointer-events: none;
-            opacity: 0.95;
+            opacity: 0.0; /* hidden by default until player steps on the cell */
         }
 
         .key-marker.picked {
@@ -653,6 +648,18 @@
             pointer-events: none;
             color: #bfeaff;
             animation: float 2.2s ease-in-out infinite;
+            opacity: 0.0; /* hidden until stepped on */
+        }
+
+        .key-marker, .scroll-marker, .artifact-marker, .object-marker {
+            transition: opacity 220ms ease, transform 220ms ease;
+            transform: translateY(4px) scale(0.98);
+        }
+
+        .revealed {
+            opacity: 1 !important;
+            transform: translateY(0) scale(1) !important;
+            pointer-events: none;
         }
 
         .scroll-marker {
@@ -728,9 +735,9 @@
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
-            min-height: calc(100vh - 40px);
-            width: calc(100% - 40px);
-            margin: 0 auto;
+            min-height: 100vh;
+            width: 100vw;
+            margin: 0;
             background-attachment: fixed;
             position: relative;
             overflow: hidden;
@@ -757,6 +764,19 @@
             box-shadow: none;
             color: inherit; /* keep the same text tone as surrounding content */
             transition: transform 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        /* Score float animation for +N text */
+        .score-float {
+            position: absolute;
+            pointer-events: none;
+            font-weight: 800;
+            color: #fff8e6;
+            text-shadow: 0 6px 18px rgba(0,0,0,0.45);
+            transform: translateY(0);
+            opacity: 1;
+            transition: transform 900ms cubic-bezier(.2,.9,.2,1), opacity 900ms ease;
+            z-index: 13000;
         }
 
         /* optional subtle hover to match main page cards (won't affect keyboard users) */
@@ -942,6 +962,10 @@
                     <strong>Spacebar</strong><br>
                     Pause / Resume
                 </div>
+                <div class="control-item">
+                    <strong>K Key</strong><br>
+                    Use a key at the correct door
+                </div>
             </div>
 
             <h2 class="htp-elements">Game Elements</h2>
@@ -987,7 +1011,7 @@
         <h1 id="selected-level-title">Level</h1>
 
 `        <!-- two-column layout: maze on the left, HUD/controls on the right -->
-        <div class="level-layout" style="width:100%;display:flex;gap:20px;align-items:flex-start;justify-content:space-between;">
+    <div class="level-layout" style="width:100%;display:flex;gap:20px;align-items:flex-start;justify-content:flex-start;padding-left:0px;margin-left:-160px;">
             <div class="left-column" style="flex:1;min-width:320px;">
                 <div id="maze-board" class="maze-board" aria-live="polite"></div>
             </div>
@@ -998,7 +1022,9 @@
                     <div class="stat-row">
                         <div id="timer-display" class="stat-item">Time: 02:00</div>
                         <div id="hud-keys" class="stat-item">Keys: 0/1</div>
-                        <div id="hud-traps" class="stat-item">Traps: 0</div>
+                <div id="hud-traps" class="stat-item">Traps: 0</div>
+                <div id="hud-score" class="stat-item">Score: 0</div>
+                <div id="hud-highscore" class="stat-item">Best: 0</div>
                     </div>
                     <hr class="glass-sep" />
                     <div class="room-details">
@@ -1030,7 +1056,7 @@
     </div>
 
     <!-- Notes panel + button -->
-    <button id="notes-btn" class="btn" title="Toggle Notes (N)">📝 Notes (N)</button>
+    <button id="notes-btn" class="btn" title="Toggle Notes (N)">📝</button>
 
     <div id="notes-panel" class="notes hidden" aria-hidden="true">
         <button class="close-notes" aria-label="Close notes">✕</button>
@@ -1041,6 +1067,7 @@
             <li>Arrow keys — Move</li>
             <li>R — Restart</li>
             <li>Spacebar — Pause / Resume</li>
+            <li>K — Use key at the correct door (must be standing at the correct door)</li>
         </ul>
         <!-- Developer notes / tips removed per request -->
     </div>
@@ -1162,6 +1189,11 @@
                 // Movement when in a level room: Arrow keys
                 // (levelVisible already computed above)
                 if (levelVisible && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                    // if a modal/popup is open, block movement until it is closed
+                    if (modalOpen) {
+                        e.preventDefault();
+                        return;
+                    }
                     e.preventDefault();
                     switch (e.key) {
                         case 'ArrowUp': tryMove(0, -1); break;
@@ -1399,6 +1431,12 @@
             let currentLevelNum = null; // track which level is active so we can restart it on timeout
             let paused = false; // whether the current level is paused (only inside level screen)
             let unlockedLevels = 1; // how many levels are unlocked (start with level 1)
+            let currentLevelArtifactTotal = 0; // total artifacts across all rooms in current level
+            let modalOpen = false; // whether a blocking modal/popup is currently shown
+            // Scoring (competitive option)
+            let score = 0;
+            let highScore = 0;
+            try { highScore = parseInt(localStorage.getItem('echoes_high_score') || '0', 10) || 0; } catch (e) { highScore = 0; }
             // step counters
             let stepsThisLevel = 0;
             let stepsThisRoom = 0;
@@ -1541,6 +1579,9 @@
                 updateHudKeys();
                 updateTrapCounter();
                 updateStepsDisplay();
+                // update score displays
+                const hs = document.getElementById('hud-highscore'); if (hs) hs.textContent = `Best: ${highScore}`;
+                const sc = document.getElementById('hud-score'); if (sc) sc.textContent = `Score: ${score}`;
                 // set per-room background image for visual rooms that have matching images
                 const levelScreenEl = document.getElementById('level-screen');
                 if (levelScreenEl) {
@@ -1678,6 +1719,50 @@
                 setTimeout(() => { root.classList.remove(name); }, 1400);
             }
 
+            // Score helper: update score, show floating text, pulse HUD and persist high score
+            function addScore(amount, opts) {
+                if (typeof amount !== 'number' || amount === 0) return;
+                score += amount;
+                // update HUD quickly
+                const hud = document.getElementById('hud-score');
+                if (hud) hud.textContent = `Score: ${score}`;
+
+                // pulse the HUD
+                try { triggerGlobalAnimation('key-found', { hudId: 'hud-score' }); } catch(e){}
+
+                // floating +N near HUD
+                try {
+                    const levelEl = document.getElementById('level-screen') || document.body;
+                    const float = document.createElement('div');
+                    float.className = 'score-float';
+                    float.textContent = (amount > 0 ? `+${amount}` : `${amount}`);
+                    levelEl.appendChild(float);
+                    // position near top-right of HUD area
+                    const hudEl = document.getElementById('hud-score');
+                    if (hudEl) {
+                        const rect = hudEl.getBoundingClientRect();
+                        const parentRect = levelEl.getBoundingClientRect ? levelEl.getBoundingClientRect() : { left:0, top:0 };
+                        float.style.left = `${rect.left - parentRect.left + rect.width + 8}px`;
+                        float.style.top = `${rect.top - parentRect.top}px`;
+                    } else {
+                        float.style.left = '80%';
+                        float.style.top = '10%';
+                    }
+                    // animate up and fade
+                    setTimeout(() => { float.style.transform = 'translateY(-48px)'; float.style.opacity = '0'; }, 40);
+                    setTimeout(() => { try { float.remove(); } catch(e) {} }, 980);
+                } catch (e) {}
+
+                // update high score persistent
+                try {
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('echoes_high_score', String(highScore));
+                        const hh = document.getElementById('hud-highscore'); if (hh) hh.textContent = `Best: ${highScore}`;
+                    }
+                } catch (e) {}
+            }
+
                 // helper: attempt to load an image matching the room name (many filename variants and common folders)
                 function setRoomBackground(roomName) {
                     if (!roomName) return;
@@ -1751,6 +1836,60 @@
                 }
                 const collected = grid.collectedKeys || ((grid.initialKeyCount || 1) - remaining);
                 hud.textContent = `Keys: ${collected}/${grid.initialKeyCount || 1}`;
+            }
+
+            // Reveal hidden markers on a cell when the player steps on it.
+            // Calls cb() after any popup is dismissed (or immediately if nothing to reveal).
+            function revealCellIfHidden(grid, x, y, cb) {
+                if (!grid || typeof x !== 'number' || typeof y !== 'number') { if (typeof cb === 'function') cb(); return; }
+                const n = grid.length;
+                const board = document.getElementById('maze-board');
+                if (!board) { if (typeof cb === 'function') cb(); return; }
+                const idx = y * n + x;
+                const cellEl = board.children[idx];
+                const cell = grid[y] ? grid[y][x] : null;
+                if (!cellEl || !cell) { if (typeof cb === 'function') cb(); return; }
+
+                // determine what is present but still hidden
+                const items = [];
+                if (cell.hasKey) items.push('key');
+                if (cell.hasArtifact) items.push('artifact');
+                if (cell.hasScroll) items.push('scroll');
+                if (cell.hasLever && !cell.leverActivated) items.push('lever');
+                if (cell.trapType && !cell.trapSolved) items.push('trap');
+
+                if (items.length === 0) { if (typeof cb === 'function') cb(); return; }
+
+                // reveal DOM markers for this cell (if present)
+                try {
+                    const keyEl = cellEl.querySelector('.key-marker'); if (keyEl) keyEl.classList.add('revealed');
+                    const artEl = cellEl.querySelector('.artifact-marker'); if (artEl) artEl.classList.add('revealed');
+                    const scrEl = cellEl.querySelector('.scroll-marker'); if (scrEl) scrEl.classList.add('revealed');
+                    const objEl = cellEl.querySelector('.object-marker'); if (objEl) objEl.classList.add('revealed');
+                } catch (e) {}
+
+                // For traps and levers, do NOT show a separate reveal modal here because
+                // handleCellEvents will show the interactive modal or message (avoids duplicate popups).
+                // For keys, artifacts, and scrolls we show a brief reveal modal.
+                if (items.includes('trap') || items.includes('lever')) {
+                    if (typeof cb === 'function') cb();
+                    return;
+                }
+
+                // compose message for non-interactive reveals
+                let msg = '';
+                if (items.includes('key')) msg = 'You spot something glinting on the floor — a key!';
+                else if (items.includes('artifact')) msg = 'An artifact rests here, its surface humming with energy.';
+                else if (items.includes('scroll')) msg = 'A worn scroll lies on the floor. It might contain a hint.';
+
+                // show modal about the revealed item, then continue with pickup/disarm logic in cb
+                if (msg) {
+                    showModal(msg, () => {
+                        if (typeof cb === 'function') cb();
+                    });
+                } else {
+                    if (typeof cb === 'function') cb();
+                }
             }
 
             // Reusable action: use a key while standing at the correct door
@@ -1915,7 +2054,16 @@
 
             function startLevel(levelNum) {
                 // always (re)start a level when selected
-                const size = 7 + levelNum + 5; // was 7+levelNum; now +5 (level1 -> 13)
+                // For level 1 use a smaller maze (5x5) with 2 rooms; other levels keep original sizing and 3 rooms
+                let size;
+                let roomsCount = 3;
+                if (levelNum === 1) {
+                    size = 6;
+                    roomsCount = 2;
+                } else {
+                    size = 7 + levelNum + 5; // original sizing for higher levels
+                    roomsCount = 3;
+                }
                 currentLevelNum = levelNum;
                 paused = false;
                 // reset step/trap/time counters
@@ -1923,7 +2071,8 @@
                 stepsThisRoom = 0;
                 trapsDisarmedThisLevel = 0;
                 elapsedTimeThisLevel = 0;
-                currentRooms = [generateMaze(size, levelNum), generateMaze(size, levelNum), generateMaze(size, levelNum)];
+                currentRooms = [];
+                for (let i = 0; i < roomsCount; i++) currentRooms.push(generateMaze(size, levelNum));
                 currentRoomIndex = 0;
                 playerPos = { x: 0, y: 0 };
                 // assign unique human-friendly room names (choose without repetition)
@@ -1940,6 +2089,10 @@
                     // generate artifact hints (one scroll per artifact), then place scrolls in the maze
                     try { generateArtifactHints(currentRooms[i]); generateScrolls(currentRooms[i]); } catch (e) { console.warn('artifact hints err', e); }
                 }
+                // compute total artifacts across all rooms in this level
+                try {
+                    currentLevelArtifactTotal = currentRooms.reduce((acc, g) => acc + (Array.isArray(g.artifacts) ? g.artifacts.length : 0), 0);
+                } catch (e) { currentLevelArtifactTotal = 0; }
                 renderCurrentRoom();
                 resetTimer();
                 startTimer();
@@ -1975,9 +2128,18 @@
                 stepsThisRoom++;
                 updateStepsDisplay();
 
-                renderCurrentRoom();
-                checkForKeyPickup();
-                checkRoomComplete();
+                    renderCurrentRoom();
+                    // reveal any hidden marker on the cell we just stepped on, then continue with pickups/trap checks
+                    try {
+                        revealCellIfHidden(currentRooms[currentRoomIndex], playerPos.x, playerPos.y, () => {
+                            try { checkForKeyPickup(); } catch(e){}
+                            try { checkRoomComplete(); } catch(e){}
+                        });
+                    } catch(e) {
+                        // fallback in case reveal fails
+                        try { checkForKeyPickup(); } catch(e){}
+                        try { checkRoomComplete(); } catch(e){}
+                    }
             }
 
             function checkForKeyPickup() {
@@ -2036,8 +2198,18 @@
                     }
                     // stronger visual: pulse the artifacts HUD and flash the cell
                     triggerGlobalAnimation('key-found', { hudId: 'artifacts-collected', cellEl: artifactCellEl });
+                    // award points for artifact
+                    addScore(150);
                     updateLevelStats();
                     renderCurrentRoom();
+                    // if this was the last artifact for the level, show a special popup
+                    try {
+                        if (currentLevelArtifactTotal > 0 && artifactsCollectedThisLevel >= currentLevelArtifactTotal) {
+                            // celebratory animation + message
+                            triggerGlobalAnimation('level-cleared', { hudId: 'artifacts-collected' });
+                            showModal('You have collected the final artifact for this level! It hums with power.', () => {});
+                        }
+                    } catch (e) {}
                 }
                 if (cell.hasKey) {
                     // animate the key pickup on the DOM element, then remove
@@ -2062,6 +2234,8 @@
                                 updateHudKeys();
                                 // key found animation (pulse keys HUD)
                                 triggerGlobalAnimation('key-found', { hudId: 'hud-keys', cellEl });
+                                // award points for key pickup
+                                addScore(30);
                                 // if no keys remain in the room (physically), also unlock exit
                                 let stillHasKey = false;
                                 for (let yy = 0; yy < grid.length; yy++) {
@@ -2100,14 +2274,14 @@
                 const curCell = grid[playerPos.y][playerPos.x];
                 if (curCell && curCell.isDoor) {
                     // Only advance if the correct door is unlocked via using a key at the door
-                    if (curCell.isCorrectDoor) {
+                        if (curCell.isCorrectDoor) {
                         if (grid.exitLocked) {
                             const info = document.getElementById('maze-info');
                             if (info) info.textContent = '🚪 The door is locked. Use a key (press K) while standing at the correct door to unlock it.';
                             return;
                         }
                         // correct door and unlocked -> advance
-                        if (currentRoomIndex < 2) {
+                        if (currentRoomIndex < currentRooms.length - 1) {
                             currentRoomIndex++;
                             playerPos = { x: 0, y: 0 };
                             // entering a new room: reset per-room step counter
@@ -2119,11 +2293,17 @@
                             resetTimer();
                             startTimer();
                             const info = document.getElementById('maze-info');
-                            if (info) info.textContent = `Entered Room ${currentRoomIndex + 1}/3`;
+                            if (info) info.textContent = `Entered Room ${currentRoomIndex + 1}/${currentRooms.length}`;
                         } else {
                             stopTimer();
                             // unlock next level
                             unlockedLevels = Math.min(5, Math.max(unlockedLevels, currentLevelNum + 1));
+                            // award level clear points and time bonus (competitive mode)
+                            try {
+                                addScore(50); // base level clear
+                                // time bonus: 2 points per remaining second
+                                if (typeof timerSeconds === 'number' && timerSeconds > 0) addScore(timerSeconds * 2);
+                            } catch (e) {}
                             // animate and show level-cleared modal
                             triggerGlobalAnimation('level-cleared');
                             showLevelClearedModal(currentLevelNum, () => {
@@ -2216,7 +2396,9 @@
                             grid.traps = grid.traps.filter(tt => !(tt.x === x && tt.y === y));
                         }
                         renderCurrentRoom();
-                        showModal('A trap sprung! You were sent back to the room start.', () => {});
+                        // penalize player for triggering a trap that sends them to start
+                        addScore(-50);
+                        showModal('A trap sprung! You were sent back to the room start. (−50 points)', () => {});
                         return;
                     }
 
@@ -2241,14 +2423,18 @@
                                     if (Array.isArray(grid.traps)) {
                                         grid.traps = grid.traps.filter(tt => !(tt.x === x && tt.y === y));
                                     }
-                                    renderCurrentRoom();
-                                    updateLevelStats();
-                                    showModal('Correct! You disarmed the trap.', () => {});
+                                        // award points for disarming
+                                        addScore(75);
+                                        renderCurrentRoom();
+                                        updateLevelStats();
+                                        showModal('Correct! You disarmed the trap. (+75 points)', () => {});
                                 } else {
                                 // fail: reset to start but allow future attempts
                                 playerPos = { x: 0, y: 0 };
                                 renderCurrentRoom();
-                                showModal('Wrong! The trap reset you to the start of the room.', () => {});
+                                        // penalty for failing the puzzle and being reset
+                                        addScore(-20);
+                                        showModal('Wrong! The trap reset you to the start of the room. (−20 points)', () => {});
                             }
                         });
                         return;
@@ -2288,10 +2474,13 @@
                 // clear and show
                 area.innerHTML = '';
                 pm.classList.remove('hidden');
+                // block movement/interactions while puzzle modal is open
+                modalOpen = true;
 
                 // helper to close and cleanup
                 function cleanup() {
                     pm.classList.add('hidden');
+                    modalOpen = false;
                     submit.removeEventListener('click', onSubmit);
                     cancel.removeEventListener('click', onCancel);
                 }
@@ -2554,12 +2743,15 @@
                     return;
                 }
                 levelClearedModal.classList.remove('hidden');
+                // block movement while level cleared modal is visible
+                modalOpen = true;
                 levelClearedModal.setAttribute('aria-hidden','false');
                 const txt = document.getElementById('level-cleared-text');
                 if (txt) txt.textContent = `Level ${levelNum} cleared!`;
 
                 function cleanup() {
                     levelClearedModal.classList.add('hidden');
+                    modalOpen = false;
                     nextLevelBtn.removeEventListener('click', onNextClick);
                     backToLevelsBtn.removeEventListener('click', onBackClick);
                 }
@@ -2599,12 +2791,15 @@
                 }
                 modalText.textContent = text;
                 modal.classList.remove('hidden');
+                // block movement while this modal is visible
+                modalOpen = true;
                 modal.setAttribute('aria-hidden','false');
 
                 function onOk() {
                     modal.classList.add('hidden');
                     modal.setAttribute('aria-hidden','true');
                     modalOk.removeEventListener('click', onOk);
+                    modalOpen = false;
                     if (typeof cb === 'function') cb();
                 }
 
